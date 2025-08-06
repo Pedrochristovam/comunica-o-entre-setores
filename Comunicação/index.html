@@ -1,0 +1,555 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Paperclip, Calendar, Users, Building2, MessageSquare, FileText, Clock, CheckCircle, AlertCircle, Search, MoreVertical, Phone, Video } from 'lucide-react';
+
+const SistemaComunicacao = () => {
+  const [selectedSector, setSelectedSector] = useState('');
+  const [messageType, setMessageType] = useState('simple');
+  const [message, setMessage] = useState('');
+  const [demandDescription, setDemandDescription] = useState('');
+  const [deadline, setDeadline] = useState('');
+  const [selectedCollaborator, setSelectedCollaborator] = useState('');
+  const [attachedFiles, setAttachedFiles] = useState([]);
+  const [conversations, setConversations] = useState({});
+  const [currentUser] = useState('João Silva - GELIC');
+  const [searchTerm, setSearchTerm] = useState('');
+  const fileInputRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  const sectors = [
+    { 
+      id: 'GELIC', 
+      name: 'GELIC', 
+      color: 'bg-blue-500', 
+      icon: '🔧', 
+      fullName: 'Gerência de Licenciamento',
+      collaborators: ['Maria Silva', 'João Santos', 'Ana Costa', 'Pedro Lima', 'Carla Oliveira']
+    },
+    { 
+      id: 'GERAT', 
+      name: 'GERAT', 
+      color: 'bg-blue-600', 
+      icon: '⚙️', 
+      fullName: 'Gerência Técnica',
+      collaborators: ['Roberto Ferreira', 'Lucia Mendes', 'Carlos Alberto', 'Fernanda Rocha', 'Diego Martins']
+    },
+    { 
+      id: 'GEJUR', 
+      name: 'GEJUR', 
+      color: 'bg-blue-700', 
+      icon: '⚖️', 
+      fullName: 'Gerência Jurídica',
+      collaborators: ['Dr. Antonio Barros', 'Dra. Patricia Lopes', 'Rafael Campos', 'Julia Nascimento', 'Marcos Vinicius']
+    },
+    { 
+      id: 'GEVOV', 
+      name: 'GEVOV', 
+      color: 'bg-blue-800', 
+      icon: '🚀', 
+      fullName: 'Gerência de Voo',
+      collaborators: ['Capitão Silva', 'Comandante Maria', 'Piloto Carlos', 'Instrutor Ana', 'Supervisor João']
+    },
+    { 
+      id: 'JURIDICO', 
+      name: 'JURÍDICO', 
+      color: 'bg-blue-900', 
+      icon: '📋', 
+      fullName: 'Departamento Jurídico',
+      collaborators: ['Advogado Pedro', 'Consultora Laura', 'Analista Bruno', 'Especialista Carmen', 'Coordenador Luis']
+    },
+    { 
+      id: 'DIRETORIA', 
+      name: 'DIRETORIA', 
+      color: 'bg-blue-400', 
+      icon: '👔', 
+      fullName: 'Diretoria Executiva',
+      collaborators: ['Diretor Geral', 'Diretora Financeira', 'Diretor Técnico', 'Diretora RH', 'Diretor Comercial']
+    }
+  ];
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [conversations, selectedSector]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files);
+    setAttachedFiles(prev => [...prev, ...files]);
+  };
+
+  const removeFile = (index) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const sendMessage = () => {
+    if (!selectedSector || (!message.trim() && !demandDescription.trim())) return;
+
+    const newMessage = {
+      id: Date.now(),
+      sender: currentUser,
+      timestamp: new Date(),
+      type: messageType,
+      content: messageType === 'simple' ? message : demandDescription,
+      files: [...attachedFiles],
+      deadline: messageType === 'demand' ? deadline : null,
+      assignedTo: messageType === 'demand' ? selectedCollaborator : null,
+      status: messageType === 'demand' ? 'pending' : 'sent',
+      responses: []
+    };
+
+    setConversations(prev => ({
+      ...prev,
+      [selectedSector]: [...(prev[selectedSector] || []), newMessage]
+    }));
+
+    setMessage('');
+    setDemandDescription('');
+    setDeadline('');
+    setSelectedCollaborator('');
+    setAttachedFiles([]);
+    setMessageType('simple');
+  };
+
+  const formatDate = (date) => {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'pending': return <Clock className="w-4 h-4 text-blue-500" />;
+      case 'completed': return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'overdue': return <AlertCircle className="w-4 h-4 text-red-500" />;
+      default: return null;
+    }
+  };
+
+  const selectedSectorInfo = sectors.find(s => s.id === selectedSector);
+
+  const filteredSectors = sectors.filter(sector => 
+    sector.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sector.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex flex-col overflow-hidden">
+      {/* Header Premium */}
+      <div className="bg-white shadow-2xl border-b border-blue-100 flex-shrink-0">
+        <div className="px-6 py-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-blue-700 rounded-2xl shadow-xl">
+                <Building2 className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                  Sistema de Comunicação
+                </h1>
+                <p className="text-blue-600 text-sm font-medium">Conectando setores com excelência</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl px-6 py-3 shadow-lg">
+                <span className="text-white font-semibold">{currentUser.split(' - ')[0]}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar Premium */}
+        <div className="w-80 flex-shrink-0 bg-white shadow-2xl border-r border-blue-100">
+          {/* Search Bar */}
+          <div className="p-4 bg-blue-50 border-b border-blue-100">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-400" />
+              <input
+                type="text"
+                placeholder="Buscar setores..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-white border-2 border-blue-200 rounded-xl text-gray-700 placeholder-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+              />
+            </div>
+          </div>
+
+          {/* Contacts Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-4 border-b border-blue-100">
+            <h2 className="text-white font-bold text-lg flex items-center">
+              <Users className="w-5 h-5 mr-3" />
+              Setores Corporativos
+            </h2>
+          </div>
+
+          {/* Contacts List */}
+          <div className="h-full overflow-y-auto pb-20 custom-scrollbar bg-blue-50">
+            <div className="p-4 space-y-3">
+              {filteredSectors.map((sector) => {
+                const hasMessages = conversations[sector.id]?.length > 0;
+                const unreadCount = conversations[sector.id]?.filter(msg => msg.status === 'pending').length || 0;
+                const lastMessage = conversations[sector.id]?.slice(-1)[0];
+                
+                return (
+                  <button
+                    key={sector.id}
+                    onClick={() => setSelectedSector(sector.id)}
+                    className={`w-full text-left p-4 rounded-2xl transition-all duration-300 group hover:scale-105 hover:shadow-xl ${
+                      selectedSector === sector.id
+                        ? 'bg-gradie nt-to-r from-blue-500 to-blue-700 text-white shadow-2xl transform scale-105'
+                        : 'bg-white hover:bg-blue-50 text-gray-700 border-2 border-blue-100 hover:border-blue-300 shadow-lg'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg transition-all duration-300 group-hover:scale-110 ${
+                        selectedSector === sector.id ? 'bg-white/20 backdrop-blur-sm' : sector.color
+                      }`}>
+                        <span className="text-xl">{sector.icon}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <div className={`font-bold text-lg ${selectedSector === sector.id ? 'text-white' : 'text-gray-800'}`}>
+                            {sector.name}
+                          </div>
+                          <div className="flex flex-col items-end space-y-1">
+                            {unreadCount > 0 && (
+                              <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-2 py-1 rounded-full min-w-[20px] text-center shadow-lg font-bold">
+                                {unreadCount}
+                              </span>
+                            )}
+                            {lastMessage && (
+                              <div className={`text-xs font-medium ${
+                                selectedSector === sector.id ? 'text-white/80' : 'text-blue-500'
+                              }`}>
+                                {formatDate(lastMessage.timestamp).split(' ')[1]}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className={`text-sm font-semibold mb-1 ${
+                          selectedSector === sector.id ? 'text-white/90' : 'text-blue-600'
+                        }`}>
+                          {sector.fullName}
+                        </div>
+                        {lastMessage && (
+                          <div className={`text-xs truncate max-w-[180px] ${
+                            selectedSector === sector.id ? 'text-white/70' : 'text-gray-500'
+                          }`}>
+                            {lastMessage.content.substring(0, 35)}...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Chat Area Premium */}
+        <div className="flex-1 flex flex-col bg-gradient-to-b from-white to-blue-50">
+          {selectedSector ? (
+            <>
+              {/* Chat Header Premium */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white border-b border-blue-200 shadow-xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg bg-white/20 backdrop-blur-sm`}>
+                      <span className="text-xl">{selectedSectorInfo?.icon}</span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-xl">{selectedSectorInfo?.name}</h3>
+                      <p className="text-blue-100 text-sm font-medium">{selectedSectorInfo?.fullName}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <button className="p-3 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all duration-300 border border-white/30 shadow-lg">
+                      <Phone className="w-5 h-5" />
+                    </button>
+                    <button className="p-3 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all duration-300 border border-white/30 shadow-lg">
+                      <Video className="w-5 h-5" />
+                    </button>
+                    <button className="p-3 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all duration-300 border border-white/30 shadow-lg">
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Messages Area Premium */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-gradient-to-b from-blue-50 to-white">
+                {!conversations[selectedSector] || conversations[selectedSector].length === 0 ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center bg-white rounded-3xl p-12 border-2 border-blue-200 shadow-2xl">
+                      <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+                        <span className="text-3xl">{selectedSectorInfo?.icon}</span>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-800 mb-3">Conversa com {selectedSectorInfo?.name}</h3>
+                      <p className="text-gray-600 text-lg">Ainda não há mensagens. Seja o primeiro a iniciar a conversa!</p>
+                    </div>
+                  </div>
+                ) : (
+                  conversations[selectedSector]?.map((msg) => (
+                    <div key={msg.id} className="bg-white rounded-3xl p-6 shadow-xl border-2 border-blue-100 hover:shadow-2xl transition-all duration-300 hover:border-blue-300">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center text-white text-lg font-bold shadow-lg">
+                            {msg.sender.split(' ')[0][0]}
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-800 text-lg">{msg.sender}</p>
+                            <p className="text-blue-500 text-sm font-medium">{formatDate(msg.timestamp)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          {msg.type === 'demand' && getStatusIcon(msg.status)}
+                          <span className={`text-xs px-3 py-2 rounded-xl font-bold shadow-lg ${
+                            msg.type === 'demand' 
+                              ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white' 
+                              : 'bg-gradient-to-r from-blue-400 to-blue-600 text-white'
+                          }`}>
+                            {msg.type === 'demand' ? '📋 Demanda' : '💬 Mensagem'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <p className="text-gray-700 leading-relaxed text-lg font-medium">{msg.content}</p>
+                        
+                        {msg.deadline && (
+                          <div className="flex items-center space-x-3 text-blue-700 bg-blue-100 p-4 rounded-2xl border-2 border-blue-200 shadow-sm">
+                            <Calendar className="w-5 h-5" />
+                            <span className="font-bold">Prazo: {new Date(msg.deadline).toLocaleDateString('pt-BR')}</span>
+                          </div>
+                        )}
+
+                        {msg.assignedTo && (
+                          <div className={`flex items-center space-x-3 p-4 rounded-2xl border-2 shadow-sm ${
+                            msg.assignedTo === 'Qualquer colaborador pode responder'
+                              ? 'text-yellow-700 bg-yellow-100 border-yellow-200'
+                              : 'text-green-700 bg-green-100 border-green-200'
+                          }`}>
+                            {msg.assignedTo === 'Qualquer colaborador pode responder' ? (
+                              <div className="flex items-center space-x-2">
+                                <span className="text-xl">🌟</span>
+                                <Users className="w-5 h-5" />
+                              </div>
+                            ) : (
+                              <Users className="w-5 h-5" />
+                            )}
+                            <span className="font-bold">
+                              {msg.assignedTo === 'Qualquer colaborador pode responder' 
+                                ? 'Aberto para qualquer colaborador do setor'
+                                : `Destinado para: ${msg.assignedTo}`
+                              }
+                            </span>
+                          </div>
+                        )}
+
+                        {msg.files.length > 0 && (
+                          <div className="space-y-3">
+                            <p className="text-gray-700 font-bold">📎 Arquivos anexados:</p>
+                            <div className="grid gap-2">
+                              {msg.files.map((file, index) => (
+                                <div key={index} className="flex items-center space-x-3 bg-blue-50 p-3 rounded-xl border-2 border-blue-200 shadow-sm">
+                                  <FileText className="w-5 h-5 text-blue-600" />
+                                  <span className="text-gray-700 font-semibold">{file.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Message Input Area Premium */}
+              <div className="border-t-2 border-blue-200 p-6 bg-white shadow-2xl">
+                {/* Message Type Selection */}
+                <div className="flex space-x-4 mb-6">
+                  <button
+                    onClick={() => setMessageType('simple')}
+                    className={`flex items-center space-x-3 px-6 py-3 rounded-2xl transition-all duration-300 font-bold shadow-lg border-2 ${
+                      messageType === 'simple'
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-xl scale-105 border-blue-600'
+                        : 'bg-white text-blue-600 hover:bg-blue-50 border-blue-300 hover:border-blue-500'
+                    }`}
+                  >
+                    <MessageSquare className="w-5 h-5" />
+                    <span>Mensagem Simples</span>
+                  </button>
+                  <button
+                    onClick={() => setMessageType('demand')}
+                    className={`flex items-center space-x-3 px-6 py-3 rounded-2xl transition-all duration-300 font-bold shadow-lg border-2 ${
+                      messageType === 'demand'
+                        ? 'bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-xl scale-105 border-blue-700'
+                        : 'bg-white text-blue-600 hover:bg-blue-50 border-blue-300 hover:border-blue-500'
+                    }`}
+                  >
+                    <FileText className="w-5 h-5" />
+                    <span>Nova Demanda</span>
+                  </button>
+                </div>
+
+                {messageType === 'demand' && (
+                  <div className="space-y-4 mb-6">
+                    <div>
+                      <label className="block text-gray-700 font-bold mb-3 text-lg">
+                        📝 Descrição da Demanda *
+                      </label>
+                      <textarea
+                        value={demandDescription}
+                        onChange={(e) => setDemandDescription(e.target.value)}
+                        placeholder="Descreva detalhadamente o que precisa ser feito..."
+                        className="w-full p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none h-32 text-gray-700 placeholder-blue-400 shadow-lg font-medium"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div>
+                        <label className="block text-gray-700 font-bold mb-3 text-lg">
+                          👤 Destinatário *
+                        </label>
+                        <select
+                          value={selectedCollaborator}
+                          onChange={(e) => setSelectedCollaborator(e.target.value)}
+                          className="w-full p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 shadow-lg font-medium"
+                        >
+                          <option value="" className="bg-white text-gray-700">Selecione um destinatário</option>
+                          <option value="Qualquer colaborador pode responder" className="bg-white text-gray-700 font-bold">
+                            🌟 Qualquer colaborador pode responder
+                          </option>
+                          {selectedSectorInfo?.collaborators?.map((collaborator, index) => (
+                            <option key={index} value={collaborator} className="bg-white text-gray-700">
+                              👤 {collaborator}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-gray-700 font-bold mb-3 text-lg">
+                          📅 Prazo Limite *
+                        </label>
+                        <input
+                          type="date"
+                          value={deadline}
+                          onChange={(e) => setDeadline(e.target.value)}
+                          className="w-full p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 shadow-lg font-medium"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-gray-700 font-bold mb-3 text-lg">
+                          📎 Anexar Arquivos
+                        </label>
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full p-4 border-2 border-dashed border-blue-300 rounded-2xl hover:border-blue-500 transition-all duration-300 flex items-center justify-center space-x-3 text-blue-600 hover:text-blue-700 hover:bg-blue-50 shadow-lg font-semibold"
+                        >
+                          <Paperclip className="w-5 h-5" />
+                          <span>Clique para anexar</span>
+                        </button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          onChange={handleFileUpload}
+                          className="hidden"
+                        />
+                      </div>
+                    </div>
+
+                    {attachedFiles.length > 0 && (
+                      <div className="space-y-3">
+                        <p className="text-gray-700 font-bold text-lg">📎 Arquivos anexados:</p>
+                        <div className="grid gap-2">
+                          {attachedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between bg-blue-50 p-3 rounded-xl border-2 border-blue-200 shadow-sm">
+                              <div className="flex items-center space-x-3">
+                                <FileText className="w-5 h-5 text-blue-600" />
+                                <span className="text-gray-700 font-semibold">{file.name}</span>
+                              </div>
+                              <button
+                                onClick={() => removeFile(index)}
+                                className="text-red-500 hover:text-red-700 font-bold transition-colors"
+                              >
+                                Remover
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {messageType === 'simple' && (
+                  <div className="mb-6">
+                    <textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Digite sua mensagem..."
+                      className="w-full p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none h-24 text-gray-700 placeholder-blue-400 shadow-lg font-medium"
+                    />
+                  </div>
+                )}
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={sendMessage}
+                    disabled={!selectedSector || (!message.trim() && !demandDescription.trim()) || (messageType === 'demand' && !selectedCollaborator)}
+                    className="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-8 py-4 rounded-2xl hover:from-blue-600 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3 font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 border-2 border-blue-600"
+                  >
+                    <Send className="w-5 h-5" />
+                    <span>{messageType === 'demand' ? 'Enviar Demanda' : 'Enviar Mensagem'}</span>
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-blue-50 to-white">
+              <div className="text-center bg-white rounded-3xl p-16 border-2 border-blue-200 shadow-2xl">
+                <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl">
+                  <MessageSquare className="w-12 h-12 text-white" />
+                </div>
+                <h3 className="text-3xl font-bold text-gray-800 mb-4">Bem-vindo ao Sistema</h3>
+                <p className="text-gray-600 text-xl">Selecione um setor à esquerda para iniciar uma conversa</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(59, 130, 246, 0.1);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(59, 130, 246, 0.8);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(59, 130, 246, 1);
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default SistemaComunicacao;
